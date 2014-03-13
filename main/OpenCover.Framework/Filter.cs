@@ -14,6 +14,9 @@ using Mono.Cecil;
 
 namespace OpenCover.Framework
 {
+    using Mono.Cecil.Cil;
+    using OpenCover.Framework.Model;
+
     /// <summary>
     /// A filter that is used to decide whether an assembly/class pair is instrumented
     /// </summary>
@@ -63,6 +66,18 @@ namespace OpenCover.Framework
         void AddAttributeExclusionFilters(string[] exclusionFilters);
 
         /// <summary>
+        /// Adds an exclusion for intermediate language conditions.
+        /// </summary>
+        /// <param name="exclusion"></param>
+        void AddIntermediateLanguageConditionExclusion(string exclusion);
+
+        /// <summary>
+        /// Adds an exclusion for intermediate language conditions.
+        /// </summary>
+        /// <param name="exclusion"></param>
+        void AddIntermediateLanguageBranchExclusion(string exclusion);
+
+        /// <summary>
         /// Is this entity excluded due to an attributeFilter
         /// </summary>
         /// <param name="entity">The entity to test</param>
@@ -88,6 +103,18 @@ namespace OpenCover.Framework
         /// <param name="method"></param>
         /// <returns></returns>
         bool IsAutoImplementedProperty(MethodDefinition method);
+
+        /// <summary>
+        /// Is the instruction excluded due to condition of the branch.
+        /// </summary>
+        /// <param name="instruction"></param>
+        bool IsExcludedIntermediateLanguageConditionBranch(Instruction instruction);
+
+        /// <summary>
+        /// Position of branches that are excluded from a given method
+        /// </summary>
+        /// <param name="instruction"></param>
+        IList<int> ExcludedIntermediateLanguageBranches(MethodDefinition methodDefinition);
     }  
 
     internal static class FilterHelper
@@ -135,6 +162,9 @@ namespace OpenCover.Framework
         internal IList<Lazy<Regex>> ExcludedAttributes { get; set; }
         internal IList<Lazy<Regex>> ExcludedFiles { get; set; }
         internal IList<Lazy<Regex>> TestFiles { get; set; }
+        private readonly IList<MethodExclusion> ExcludedIntermediateLanguageConditionBranch = new List<MethodExclusion>();
+        private readonly IList<BranchExclusion> ExcludedIntermediateLanguageBranch = new List<BranchExclusion>();
+
 
         /// <summary>
         /// Standard constructor
@@ -313,6 +343,43 @@ namespace OpenCover.Framework
             }
         }
 
+        public void AddIntermediateLanguageConditionExclusion(string exclusion)
+        {
+            var parts = SplitArguments(exclusion);
+            if (parts.Length == 2)
+                ExcludedIntermediateLanguageConditionBranch.Add(new MethodExclusion(parts[0], parts[1]));
+        }
+
+        public bool IsExcludedIntermediateLanguageConditionBranch(Instruction instruction)
+        {
+            if (instruction == null || !(instruction.Operand is MethodReference)) return false;
+            var operand = instruction.Operand as MethodReference;
+            return ExcludedIntermediateLanguageConditionBranch.Any(exclusion =>
+                operand.DeclaringType.FullName.StartsWith(exclusion.MethodClass) && operand.Name == exclusion.MethodName);
+        }
+
+        public void AddIntermediateLanguageBranchExclusion(string exclusion)
+        {
+            try
+            {
+                InsertBranchExclusions(SplitArguments(exclusion));
+            }
+            catch (System.FormatException ex)
+            {
+                return;
+            }
+        }
+
+        public IList<int> ExcludedIntermediateLanguageBranches(MethodDefinition methodDefinition)
+        {
+            var methodName = methodDefinition.Name;
+            var interfaces = methodDefinition.DeclaringType.Interfaces.Select(i => i.FullName).ToList();
+            var excludedBranches = ExcludedIntermediateLanguageBranch.Where(exclusion => interfaces.Contains(exclusion.Method.MethodClass) 
+                                                                             && methodName == exclusion.Method.MethodName)
+                                                                     .Select(x => x.ExcludedBranches);
+            return excludedBranches.FirstOrDefault() ?? new List<int>();
+        }
+
         public bool UseTestAssembly(string assemblyName)
         {
             if (TestFiles.Count == 0 || string.IsNullOrWhiteSpace(assemblyName))
@@ -343,6 +410,43 @@ namespace OpenCover.Framework
                 return method.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName);
             }
             return false;
+        }
+
+        private void InsertBranchExclusions(string[] parts)
+        {
+            if (parts.Length != 3) return;
+            var branchParts = parts[2].Split(',');
+            var branches = branchParts.ToList().Select(str => Convert.ToInt32(str)).ToList();
+            ExcludedIntermediateLanguageBranch.Add(new BranchExclusion(new MethodExclusion(parts[0], parts[1]), branches));
+        }
+
+        private static string[] SplitArguments(string exclusion)
+        {
+            return (exclusion ?? "").Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        private class MethodExclusion
+        {
+            public string MethodName { get; private set; }
+            public string MethodClass { get; private set; }
+
+            public MethodExclusion(string methodClass, string methodName)
+            {
+                MethodName = methodName;
+                MethodClass = methodClass;
+            }
+        }
+
+        private class BranchExclusion
+        {
+            public IList<int> ExcludedBranches { get; private set; }
+            public MethodExclusion Method { get; private set; }
+
+            public BranchExclusion(MethodExclusion method, IList<int> excludedBranches)
+            {
+                Method = method;
+                ExcludedBranches = excludedBranches;
+            }
         }
     }
 }

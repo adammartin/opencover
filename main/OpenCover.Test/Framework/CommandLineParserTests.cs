@@ -366,6 +366,66 @@ namespace OpenCover.Test.Framework
         }
 
         [Test]
+        public void HandlesIntermediateLanguageBranchExcludes_WithValue()
+        {
+            // arrange
+            var parser = new CommandLineParser(new[] { "-excludeintermediatelangaugebranch:interface::method::0,1", RequiredArgs });
+
+            // act
+            parser.ExtractAndValidateArguments();
+
+            // assert
+            Assert.AreEqual(1, parser.IntermediateLanguageBranchExclusionFilters.Count);
+            Assert.AreEqual("interface::method::0,1", parser.IntermediateLanguageBranchExclusionFilters[0]);
+        }
+
+        [Test]
+        public void HandlesIntermediateLanguageBranchExcludes_WithMultipleValue()
+        {
+            // arrange
+            var parser = new CommandLineParser(new[] { "-excludeintermediatelangaugebranch:interface::method::0,1;interface2::method2::0,1;interface3::method3::9", RequiredArgs });
+
+            // act
+            parser.ExtractAndValidateArguments();
+
+            // assert
+            Assert.AreEqual(3, parser.IntermediateLanguageBranchExclusionFilters.Count);
+            Assert.AreEqual("interface::method::0,1", parser.IntermediateLanguageBranchExclusionFilters[0]);
+            Assert.AreEqual("interface2::method2::0,1", parser.IntermediateLanguageBranchExclusionFilters[1]);
+            Assert.AreEqual("interface3::method3::9", parser.IntermediateLanguageBranchExclusionFilters[2]);
+        }
+
+        [Test]
+        public void HandlesIntermendiateLanguageBranchConditionExclusion_WithValue()
+        {
+            // arrange
+            var parser = new CommandLineParser(new[] { "-excludeintermediatelanguagecondition:class::method", RequiredArgs });
+
+            // act
+            parser.ExtractAndValidateArguments();
+            
+            //assert
+            Assert.AreEqual(1, parser.IntermediateLanguageConditionExclusionFilters.Count);
+            Assert.AreEqual("class::method", parser.IntermediateLanguageConditionExclusionFilters[0]);
+        }
+
+        [Test]
+        public void HandlesIntermendiateLanguageBranchConditionExclusion_WithMultipleValue()
+        {
+            // arrange
+            var parser = new CommandLineParser(new[] { "-excludeintermediatelanguagecondition:class::method;class2::method2;class3::method3", RequiredArgs });
+
+            // act
+            parser.ExtractAndValidateArguments();
+
+            //assert
+            Assert.AreEqual(3, parser.IntermediateLanguageConditionExclusionFilters.Count);
+            Assert.AreEqual("class::method", parser.IntermediateLanguageConditionExclusionFilters[0]);
+            Assert.AreEqual("class2::method2", parser.IntermediateLanguageConditionExclusionFilters[1]);
+            Assert.AreEqual("class3::method3", parser.IntermediateLanguageConditionExclusionFilters[2]);
+        }
+
+        [Test]
         public void HandlesExcludeByAttributeArgument_WithMultipleValues()
         {
             // arrange  

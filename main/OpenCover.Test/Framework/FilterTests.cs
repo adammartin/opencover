@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 using Moq;
@@ -11,6 +8,10 @@ using OpenCover.Framework;
 
 namespace OpenCover.Test.Framework
 {
+    using System.Collections.Generic;
+
+    using Mono.Cecil.Cil;
+
     [TestFixture]
     public class FilterTests
     {
@@ -390,6 +391,182 @@ namespace OpenCover.Test.Framework
         }
 
         [Test]
+        public void AddIntermediateLanguageConditionExclusion_HandlesNullByAddingNothing()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+
+            filter.AddIntermediateLanguageConditionExclusion(null);
+
+            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+        }
+
+        [Test]
+        public void AddIntermediateLanguageConditionExclusion_HandlesInvalidByAddingNothing()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+
+            filter.AddIntermediateLanguageConditionExclusion("System.Object");
+
+            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));           
+        }
+
+        [Test]
+        public void AddIntermediateLanguageConditionExclusion_HandlesEmptyMethod()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+
+            filter.AddIntermediateLanguageConditionExclusion("System.Object::");
+
+            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedIntermediateLanguageConditionBranchReturnsTrueWhenMatchesAFilter()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+
+            filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
+
+            Assert.True(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));            
+        }
+
+        [Test]
+        public void IsExcludedIntermediateLanguageConditionBranchReturnsTrueWhenMatchesAFilterWhenManyFilters()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+
+            filter.AddIntermediateLanguageConditionExclusion("Flinstone::Smash");
+            filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
+
+            Assert.True(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedIntermediateLanguageConditionBranchReturnsFalseWhenInstructionIsNull()
+        {
+            var filter = new Filter();
+            
+            filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
+
+            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(null));            
+        }
+
+        [Test]
+        public void IsExcludedIntermediateLanguageConditionBranchReturnsFalseWhenOperandOfInstructionIsNull()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+            instruction.Operand = null;
+
+            filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
+
+            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedIntermediateLanguageConditionBranchReturnsFalseWhenOperandOfInstructionIsNotAMethodType()
+        {
+            var filter = new Filter();
+            var instruction = CreateInstruction("System", "Object", "Blah");
+            instruction.Operand = new object();
+
+            filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
+
+            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+        }
+
+        [Test]
+        public void AddIntermediateLanguageBranchExclusion_HandlesNull()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion(null);
+
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+        }
+
+        [Test]
+        public void AddIntermediateLanguageBranchExclusion_HandlesInvalidClassOrMethod()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion("System::0");
+
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+        }
+
+        [Test]
+        public void AddIntermediateLanguageBranchExclusion_HandlesInvalidBranches()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion("System::Object");
+
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+        }
+
+        [Test]
+        public void AddIntermediateLanguageBranchExclusion_HandlesEmptyBranches()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion("System::Object::");
+
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+        }
+
+        [Test]
+        public void AddIntermediateLanguageBranchExclusion_HandlesInvalidCharacters()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion("System::Object::b,c");
+
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));            
+        }
+
+        [Test]
+        public void ExcludedIntermediateLanguageBranchesReturnsSingleBranchIgnores()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion("System.Interface::ToString::0");
+
+            var result = filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface"));
+
+            Assert.AreEqual(new List<int>() { 0 }, result);
+        }
+
+        [Test]
+        public void ExcludedIntermediateLanguageBranchesReturnsMultipleBranchIgnores()
+        {
+            var filter = new Filter();
+
+            filter.AddIntermediateLanguageBranchExclusion("System.Interface::ToString::2,4");
+
+            var result = filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface"));
+
+            Assert.AreEqual(new List<int>() { 2, 4 }, result);
+        }
+
+        private static MethodDefinition CreateMethodDefinition(string nameSpace, string className, string methodName, string implementedInterface)
+        {
+            var typeReference = CreateTypeReference(nameSpace, className);
+            var methodDefinition = new MethodDefinition(methodName, MethodAttributes.Final, typeReference);
+            methodDefinition.DeclaringType = new TypeDefinition(
+                typeReference.Namespace,
+                typeReference.Name,
+                TypeAttributes.Abstract);
+            methodDefinition.DeclaringType.Interfaces.Add(CreateTypeReference(nameSpace, implementedInterface));
+            return methodDefinition;
+        }
+
+        [Test]
         public void AddTestFileFilters_HandlesNull()
         {
             var filter = new Filter();
@@ -575,6 +752,24 @@ namespace OpenCover.Test.Framework
                 Assert.IsFalse(filter.IsAutoImplementedProperty(methodDefinition));
             }
             Assert.IsTrue(wasTested);
+        }
+
+        private static Instruction CreateInstruction(string NameSpace, string ClassName, string MethodName)
+        {
+            var instruction = Instruction.Create(OpCodes.Ret);
+            instruction.Operand = CreateMethodReference(NameSpace, ClassName, MethodName);
+            return instruction;
+        }
+
+        private static MethodReference CreateMethodReference(string nameSpace, string className, string methodName)
+        {
+            var typeReference = CreateTypeReference(nameSpace, className);
+            return new MethodReference(methodName, typeReference) { DeclaringType = typeReference };
+        }
+
+        private static TypeReference CreateTypeReference(string nameSpace, string className)
+        {
+            return new TypeReference(nameSpace, className, ModuleDefinition.CreateModule("Blarg", ModuleKind.Console), null);
         }
     }
 }

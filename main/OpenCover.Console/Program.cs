@@ -375,6 +375,8 @@ namespace OpenCover.Console
             filter.AddAttributeExclusionFilters(parser.AttributeExclusionFilters.ToArray());
             filter.AddFileExclusionFilters(parser.FileExclusionFilters.ToArray());
             filter.AddTestFileFilters(parser.TestFilters.ToArray());
+            parser.IntermediateLanguageBranchExclusionFilters.ForEach(filter.AddIntermediateLanguageBranchExclusion);
+            parser.IntermediateLanguageConditionExclusionFilters.ForEach(filter.AddIntermediateLanguageConditionExclusion);
 
             return filter;
         }
