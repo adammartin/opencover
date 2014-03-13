@@ -31,6 +31,9 @@ namespace OpenCover.Console
         /// <returns></returns>
         static int Main(string[] args)
         {
+#if DEBUG
+           System.Diagnostics.Debugger.Launch();
+#endif
             var returnCode = 0;
             var returnCodeOffset = 0;
             var logger = LogManager.GetLogger(typeof (Bootstrapper));

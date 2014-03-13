@@ -375,6 +375,8 @@ namespace OpenCover.Framework.Symbols
                 PathOffsetList = GetBranchPath(@else);
                 Debug.Assert(PathOffsetList.Count > 0);
 
+                var skipped = _filter.IsExcludedIntermediateLanguageConditionBranch(instruction);
+
                 // add Path 0
                 BranchPoint path0 = new BranchPoint()
                 {
@@ -382,7 +384,8 @@ namespace OpenCover.Framework.Symbols
                     Ordinal = ordinal++,
                     Path = pathCounter++,
                     OffsetPoints = PathOffsetList.Count > 1 ? PathOffsetList.GetRange(0, PathOffsetList.Count - 1) : new List<int>(),
-                    EndOffset = PathOffsetList.Last()
+                    EndOffset = PathOffsetList.Last(),
+                    IsSkipped = skipped
                 };
                 Debug.Assert(!Object.ReferenceEquals(null, path0.OffsetPoints));
                 list.Add(path0);
@@ -408,7 +411,8 @@ namespace OpenCover.Framework.Symbols
                         Ordinal = ordinal++,
                         Path = pathCounter++,
                         OffsetPoints = PathOffsetList.Count > 1 ? PathOffsetList.GetRange(0, PathOffsetList.Count - 1) : new List<int>(),
-                        EndOffset = PathOffsetList.Last()
+                        EndOffset = PathOffsetList.Last(),
+                        IsSkipped = skipped
                     };
                     Debug.Assert(!Object.ReferenceEquals(null, path1.OffsetPoints));
                     list.Add( path1 );
@@ -437,7 +441,8 @@ namespace OpenCover.Framework.Symbols
                             Ordinal = ordinal++,
                             Path = pathCounter++,
                             OffsetPoints = PathOffsetList.Count > 1 ? PathOffsetList.GetRange(0, PathOffsetList.Count - 1) : new List<int>(),
-                            EndOffset = PathOffsetList.Last()
+                            EndOffset = PathOffsetList.Last(),
+                            IsSkipped = skipped
                         };
                         Debug.Assert(!Object.ReferenceEquals(null, path1toN.OffsetPoints));
                         list.Add(path1toN);

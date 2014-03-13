@@ -17,6 +17,8 @@ using ICustomAttributeProvider = Mono.Cecil.ICustomAttributeProvider;
 
 namespace OpenCover.Test.Framework.Symbols
 {
+    using Mono.Cecil.Cil;
+
     [TestFixture]
     public class CecilSymbolManagerTests
     {
@@ -147,6 +149,29 @@ namespace OpenCover.Test.Framework.Symbols
             // assert
 
             Assert.IsNotNull(points);
+        }
+
+        [Test]
+        public void GetBranchPointsForMethodToken_WillMarkBranchesAsSkippedIfExcludedByFilter()
+        {
+            // arrange
+            _mockFilter
+                .Setup(x => x.InstrumentClass(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            _mockFilter
+                .Setup(x => x.IsExcludedIntermediateLanguageConditionBranch(It.Is<Instruction>(y => y.Offset == 17)))
+                .Returns(true);
+
+            var types = _reader.GetInstrumentableTypes();
+            var type = types.First(x => x.FullName == typeof(DeclaredConstructorClass).FullName);
+            var methods = _reader.GetMethodsForType(type, new File[0]);
+
+            // act
+            var points = _reader.GetBranchPointsForToken(methods.First(x => x.Name.Contains("::HasSingleDecision")).MetadataToken);
+
+            // assert
+            Assert.IsTrue(points[0].IsSkipped);
+            Assert.IsTrue(points[1].IsSkipped);
         }
 
         [Test]
