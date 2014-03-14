@@ -712,6 +712,25 @@ namespace OpenCover.Test.Framework.Persistance
         }
 
         [Test]
+        public void Commit_With_WithBranchSkippedPointsOnly()
+        {
+            // arrange
+            var point = new BranchPoint { IsSkipped = true };
+            Instance.CoverageSession.Modules = new[] { new Module() { Classes = new[] { new Class() { Methods = new[] { new Method() { BranchPoints = new[] { point } } } } } } };
+
+            // act
+            InstrumentationPoint.AddVisitCount(point.UniqueSequencePoint, 0, 42);
+            Assert.DoesNotThrow(() => Instance.Commit());
+
+            // assert
+            Assert.AreEqual(42, point.VisitCount);
+
+            Assert.AreEqual(0, Instance.CoverageSession.Modules[0].Classes[0].Methods[0].Summary.NumBranchPoints);
+            Assert.AreEqual(0, Instance.CoverageSession.Modules[0].Classes[0].Methods[0].Summary.VisitedBranchPoints);
+
+        }
+
+        [Test]
         public void GetTrackingMethod_ReturnsFase_For_UnTrackedMethod()
         {
             // arrange

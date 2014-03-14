@@ -189,8 +189,8 @@ namespace OpenCover.Framework.Persistance
                             method.Visited = (method.MethodPoint.VisitCount > 0);
                         }
 
-                        method.Summary.NumBranchPoints = branchPoints.Count();
-                        method.Summary.VisitedBranchPoints = branchPoints.Count(pt => pt.VisitCount != 0);
+                        method.Summary.NumBranchPoints = branchPoints.Count(pt => !pt.IsSkipped);
+                        method.Summary.VisitedBranchPoints = branchPoints.Count(pt => pt.VisitCount != 0 && !pt.IsSkipped);
                         method.Summary.NumSequencePoints = sequencePoints.Count();
                         method.Summary.VisitedSequencePoints = sequencePoints.Count(pt => pt.VisitCount != 0);
 
