@@ -449,6 +449,20 @@ namespace OpenCover.Framework.Symbols
                     }
                 }
             }
+            ApplyIntermediateLanguageBranchFilter(list, methodDefinition);
+        }
+
+        private void ApplyIntermediateLanguageBranchFilter(List<BranchPoint> list, MethodDefinition methodDefinition)
+        {
+            var skippedPositions = _filter.ExcludedIntermediateLanguageBranches(methodDefinition);
+            if (skippedPositions.Any())
+            {
+                var branchPoints = list.GroupBy(x => x.Offset).Select(x => x.ToList()).ToList();
+                foreach (var position in skippedPositions)
+                {
+                    branchPoints[position].ForEach(x => x.IsSkipped = true);
+                }
+            }
         }
 
         private List<int> GetBranchPath(Instruction instruction)

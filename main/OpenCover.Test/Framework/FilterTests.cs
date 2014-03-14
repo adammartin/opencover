@@ -461,7 +461,7 @@ namespace OpenCover.Test.Framework
         {
             var filter = new Filter();
             var instruction = CreateInstruction("System", "Object", "Blah");
-            instruction.Operand = null;
+            instruction.Previous.Operand = null;
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
@@ -473,7 +473,7 @@ namespace OpenCover.Test.Framework
         {
             var filter = new Filter();
             var instruction = CreateInstruction("System", "Object", "Blah");
-            instruction.Operand = new object();
+            instruction.Previous.Operand = new object();
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
@@ -756,8 +756,10 @@ namespace OpenCover.Test.Framework
 
         private static Instruction CreateInstruction(string NameSpace, string ClassName, string MethodName)
         {
-            var instruction = Instruction.Create(OpCodes.Ret);
-            instruction.Operand = CreateMethodReference(NameSpace, ClassName, MethodName);
+            var previous = Instruction.Create(OpCodes.Call, CreateMethodReference(NameSpace, ClassName, MethodName));
+            var next = Instruction.Create(OpCodes.Ret);
+            var instruction = Instruction.Create(OpCodes.Brtrue, next);
+            instruction.Previous = previous;
             return instruction;
         }
 

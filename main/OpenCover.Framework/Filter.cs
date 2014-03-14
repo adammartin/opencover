@@ -352,8 +352,9 @@ namespace OpenCover.Framework
 
         public bool IsExcludedIntermediateLanguageConditionBranch(Instruction instruction)
         {
-            if (instruction == null || !(instruction.Operand is MethodReference)) return false;
-            var operand = instruction.Operand as MethodReference;
+            if (instruction == null || instruction.Previous == null || !(instruction.Previous.Operand is MethodReference)) return false;
+            var previous = instruction.Previous;
+            var operand = previous.Operand as MethodReference;
             return ExcludedIntermediateLanguageConditionBranch.Any(exclusion =>
                 operand.DeclaringType.FullName.StartsWith(exclusion.MethodClass) && operand.Name == exclusion.MethodName);
         }

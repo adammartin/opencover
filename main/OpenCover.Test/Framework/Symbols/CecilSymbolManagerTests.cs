@@ -41,6 +41,10 @@ namespace OpenCover.Test.Framework.Symbols
 
             _reader = new CecilSymbolManager(_mockCommandLine.Object, _mockFilter.Object, _mockLogger.Object, null);
             _reader.Initialise(_location, "OpenCover.Test");
+
+            _mockFilter.Setup(x => x.ExcludedIntermediateLanguageBranches(It.IsAny<MethodDefinition>()))
+                       .Returns(new List<int>());
+
         }
 
         [TearDown]
@@ -172,6 +176,54 @@ namespace OpenCover.Test.Framework.Symbols
             // assert
             Assert.IsTrue(points[0].IsSkipped);
             Assert.IsTrue(points[1].IsSkipped);
+        }
+
+        [Test]
+        public void GetBranchPointsForMethodToken_WillMarkBranchesAsSkippedIfInBranchSkippedList()
+        {
+            // arrange
+            _mockFilter
+                .Setup(x => x.InstrumentClass(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            _mockFilter
+                .Setup(x => x.ExcludedIntermediateLanguageBranches(It.Is<MethodDefinition>(y => y.Name == "HasSingleDecision")))
+                .Returns(new List<int>() { 0 });
+
+            var types = _reader.GetInstrumentableTypes();
+            var type = types.First(x => x.FullName == typeof(DeclaredConstructorClass).FullName);
+            var methods = _reader.GetMethodsForType(type, new File[0]);
+
+            // act
+            var points = _reader.GetBranchPointsForToken(methods.First(x => x.Name.Contains("::HasSingleDecision")).MetadataToken);
+
+            // assert
+            Assert.IsTrue(points[0].IsSkipped);
+            Assert.IsTrue(points[1].IsSkipped);
+        }
+
+        [Test]
+        public void GetBranchPointsForMethodToken_WillMarkSecondBranchesAsSkippedIfInBranchSkippedList()
+        {
+            // arrange
+            _mockFilter
+                .Setup(x => x.InstrumentClass(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(true);
+            _mockFilter
+                .Setup(x => x.ExcludedIntermediateLanguageBranches(It.Is<MethodDefinition>(y => y.Name == "HasTwoDecisions")))
+                .Returns(new List<int>() { 1 });
+
+            var types = _reader.GetInstrumentableTypes();
+            var type = types.First(x => x.FullName == typeof(DeclaredConstructorClass).FullName);
+            var methods = _reader.GetMethodsForType(type, new File[0]);
+
+            // act
+            var points = _reader.GetBranchPointsForToken(methods.First(x => x.Name.Contains("::HasTwoDecisions")).MetadataToken);
+
+            // assert
+            Assert.IsFalse(points[0].IsSkipped);
+            Assert.IsFalse(points[1].IsSkipped);
+            Assert.IsTrue(points[2].IsSkipped);
+            Assert.IsTrue(points[3].IsSkipped);
         }
 
         [Test]
