@@ -163,7 +163,7 @@ namespace OpenCover.Test.Framework.Symbols
                 .Setup(x => x.InstrumentClass(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(true);
             _mockFilter
-                .Setup(x => x.IsExcludedIntermediateLanguageConditionBranch(It.Is<Instruction>(y => y.Offset == 17)))
+                .Setup(x => x.IsExcludedIntermediateLanguageConditionBranch(It.Is<Instruction>(y => y.OpCode.FlowControl.Equals(FlowControl.Cond_Branch))))
                 .Returns(true);
 
             var types = _reader.GetInstrumentableTypes();
