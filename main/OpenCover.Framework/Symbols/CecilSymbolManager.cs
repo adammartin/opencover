@@ -8,9 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security;
-using System.Text;
-using System.Text.RegularExpressions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
@@ -375,7 +372,7 @@ namespace OpenCover.Framework.Symbols
                 PathOffsetList = GetBranchPath(@else);
                 Debug.Assert(PathOffsetList.Count > 0);
 
-                var skipped = _filter.IsExcludedIntermediateLanguageConditionBranch(instruction);
+                var skipped = _filter.IsExcludedConditionBranch(instruction);
 
                 // add Path 0
                 BranchPoint path0 = new BranchPoint()

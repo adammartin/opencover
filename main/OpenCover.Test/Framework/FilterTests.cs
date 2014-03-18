@@ -9,6 +9,7 @@ using OpenCover.Framework;
 namespace OpenCover.Test.Framework
 {
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
     using Mono.Cecil.Cil;
 
@@ -394,90 +395,90 @@ namespace OpenCover.Test.Framework
         public void AddIntermediateLanguageConditionExclusion_HandlesNullByAddingNothing()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
 
             filter.AddIntermediateLanguageConditionExclusion(null);
 
-            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
         }
 
         [Test]
         public void AddIntermediateLanguageConditionExclusion_HandlesInvalidByAddingNothing()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object");
 
-            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));           
+            Assert.False(filter.IsExcludedConditionBranch(instruction));           
         }
 
         [Test]
         public void AddIntermediateLanguageConditionExclusion_HandlesEmptyMethod()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::");
 
-            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
         }
 
         [Test]
-        public void IsExcludedIntermediateLanguageConditionBranchReturnsTrueWhenMatchesAFilter()
+        public void IsExcludedConditionBranchReturnsTrueWhenMatchesAFilter()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.True(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));            
+            Assert.True(filter.IsExcludedConditionBranch(instruction));            
         }
 
         [Test]
-        public void IsExcludedIntermediateLanguageConditionBranchReturnsTrueWhenMatchesAFilterWhenManyFilters()
+        public void IsExcludedConditionBranchReturnsTrueWhenMatchesAFilterWhenManyFilters()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
 
             filter.AddIntermediateLanguageConditionExclusion("Flinstone::Smash");
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.True(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+            Assert.True(filter.IsExcludedConditionBranch(instruction));
         }
 
         [Test]
-        public void IsExcludedIntermediateLanguageConditionBranchReturnsFalseWhenInstructionIsNull()
+        public void IsExcludedConditionBranchReturnsFalseWhenInstructionIsNull()
         {
             var filter = new Filter();
             
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(null));            
+            Assert.False(filter.IsExcludedConditionBranch(null));            
         }
 
         [Test]
-        public void IsExcludedIntermediateLanguageConditionBranchReturnsFalseWhenOperandOfInstructionIsNull()
+        public void IsExcludedConditionBranchReturnsFalseWhenOperandOfInstructionIsNull()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
             instruction.Previous.Operand = null;
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
         }
 
         [Test]
-        public void IsExcludedIntermediateLanguageConditionBranchReturnsFalseWhenOperandOfInstructionIsNotAMethodType()
+        public void IsExcludedConditionBranchReturnsFalseWhenOperandOfInstructionIsNotAMethodType()
         {
             var filter = new Filter();
-            var instruction = CreateInstruction("System", "Object", "Blah");
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
             instruction.Previous.Operand = new object();
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.False(filter.IsExcludedIntermediateLanguageConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
         }
 
         [Test]
@@ -552,18 +553,6 @@ namespace OpenCover.Test.Framework
             var result = filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface"));
 
             Assert.AreEqual(new List<int>() { 2, 4 }, result);
-        }
-
-        private static MethodDefinition CreateMethodDefinition(string nameSpace, string className, string methodName, string implementedInterface)
-        {
-            var typeReference = CreateTypeReference(nameSpace, className);
-            var methodDefinition = new MethodDefinition(methodName, MethodAttributes.Final, typeReference);
-            methodDefinition.DeclaringType = new TypeDefinition(
-                typeReference.Namespace,
-                typeReference.Name,
-                TypeAttributes.Abstract);
-            methodDefinition.DeclaringType.Interfaces.Add(CreateTypeReference(nameSpace, implementedInterface));
-            return methodDefinition;
         }
 
         [Test]
@@ -754,7 +743,78 @@ namespace OpenCover.Test.Framework
             Assert.IsTrue(wasTested);
         }
 
-        private static Instruction CreateInstruction(string NameSpace, string ClassName, string MethodName)
+        [Test]
+        public void IsExcludedConditionBranch_WillReturnFalseWhenSuppliedNull()
+        {
+            var filter = new Filter();
+            filter.ExcludeLambdaAutoGeneratedBranches();
+            Assert.False(filter.IsExcludedConditionBranch(null));
+        }
+
+        [Test]
+        public void IsExcludedConditionBranch_WillReturnTrueWhenSuppliedACompilerGeneratedAttribute()
+        {
+            var filter = new Filter();
+            filter.ExcludeLambdaAutoGeneratedBranches();
+            var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
+
+            Assert.True(filter.IsExcludedConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedConditionBranch_WillReturnFalseWhenExcludeLambdaAutoGeneratedNotEnabled()
+        {
+            var filter = new Filter();
+            var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
+
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedConditionBranch_WillReturnFalseWhenSuppliedAnInstructionWithNoAttributes()
+        {
+            var filter = new Filter();
+            filter.ExcludeLambdaAutoGeneratedBranches();
+            var instruction = CreatePreviousLoadFieldInstruction("wat", null);
+
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedConditionBranch_WillReturnFalseWhenSuppliedAnInstructionWithNoPrevious()
+        {
+            var filter = new Filter();
+            filter.ExcludeLambdaAutoGeneratedBranches();
+            var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
+            instruction.Previous = null;
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
+        }
+
+        [Test]
+        public void IsExcludedConditionBranch_WillReturnFalseWhenSuppliedAPreviousThatIsNotAFieldDefinition()
+        {
+            var filter = new Filter();
+            filter.ExcludeLambdaAutoGeneratedBranches();
+            var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
+            instruction.Previous.OpCode = OpCodes.Call;
+            instruction.Previous.Operand = new MethodDefinition("blah", MethodAttributes.Final, CreateTypeReference("some", "foo"));
+
+            Assert.False(filter.IsExcludedConditionBranch(instruction));
+        }
+
+        private static MethodDefinition CreateMethodDefinition(string nameSpace, string className, string methodName, string implementedInterface)
+        {
+            var typeReference = CreateTypeReference(nameSpace, className);
+            var methodDefinition = new MethodDefinition(methodName, MethodAttributes.Final, typeReference);
+            methodDefinition.DeclaringType = new TypeDefinition(
+                typeReference.Namespace,
+                typeReference.Name,
+                TypeAttributes.Abstract);
+            methodDefinition.DeclaringType.Interfaces.Add(CreateTypeReference(nameSpace, implementedInterface));
+            return methodDefinition;
+        }
+
+        private static Instruction CreatePreviousCallInstruction(string NameSpace, string ClassName, string MethodName)
         {
             var previous = Instruction.Create(OpCodes.Call, CreateMethodReference(NameSpace, ClassName, MethodName));
             var next = Instruction.Create(OpCodes.Ret);
@@ -767,6 +827,30 @@ namespace OpenCover.Test.Framework
         {
             var typeReference = CreateTypeReference(nameSpace, className);
             return new MethodReference(methodName, typeReference) { DeclaringType = typeReference };
+        }
+
+        private static Instruction CreatePreviousLoadFieldInstruction(string name, Type attributeType)
+        {
+            var previous = Instruction.Create(OpCodes.Ldsfld, CreateFieldDefinition(name, attributeType));
+            var next = Instruction.Create(OpCodes.Ret);
+            var instruction = Instruction.Create(OpCodes.Brtrue, next);
+            instruction.Previous = previous;
+            return instruction;
+        }
+
+        private static FieldDefinition CreateFieldDefinition(string name, Type attributeType)
+        {
+            var fieldDefinition = new FieldDefinition(name, FieldAttributes.CompilerControlled, CreateTypeReference("some", "foo"));
+            if (attributeType != null)
+            {
+                fieldDefinition.CustomAttributes.Add(new CustomAttribute(CreateMethodReference(attributeType)));
+            }
+            return fieldDefinition;
+        }
+
+        private static MethodReference CreateMethodReference(Type attributeType)
+        {
+            return ModuleDefinition.CreateModule("Blarg", ModuleKind.Console).Import(attributeType.GetConstructor(Type.EmptyTypes));
         }
 
         private static TypeReference CreateTypeReference(string nameSpace, string className)
