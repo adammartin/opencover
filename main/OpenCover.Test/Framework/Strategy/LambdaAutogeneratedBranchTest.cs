@@ -31,14 +31,14 @@
         public void WillReturnTrueWhenSuppliedACompilerGeneratedAttribute()
         {
             var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
-            Assert.True(_skipCheck.IsSkipped(instruction));
+            Assert.True(_skipCheck.IsSkipped(new InstructionData(instruction, null)));
         }
 
         [Test]
         public void WillReturnFalseWhenSuppliedAnInstructionWithNoAttributes()
         {
             var instruction = CreatePreviousLoadFieldInstruction("wat", null);
-            Assert.False(_skipCheck.IsSkipped(instruction));            
+            Assert.False(_skipCheck.IsSkipped(new InstructionData(instruction, null)));            
         }
 
         [Test]
@@ -46,7 +46,7 @@
         {
             var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
             instruction.Previous = null;
-            Assert.False(_skipCheck.IsSkipped(instruction));
+            Assert.False(_skipCheck.IsSkipped(new InstructionData(instruction, null)));
         }
 
         [Test]
@@ -55,7 +55,7 @@
             var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
             instruction.Previous.OpCode = OpCodes.Call;
             instruction.Previous.Operand = new MethodDefinition("blah", MethodAttributes.Final, CreateTypeReference("some", "foo"));
-            Assert.False(_skipCheck.IsSkipped(instruction));
+            Assert.False(_skipCheck.IsSkipped(new InstructionData(instruction, null)));
         }
 
         private static Instruction CreatePreviousLoadFieldInstruction(string name, Type attributeType)

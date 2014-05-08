@@ -13,6 +13,9 @@ namespace OpenCover.Test.Framework
 
     using Mono.Cecil.Cil;
 
+    using OpenCover.Framework.Strategy;
+    using OpenCover.Test.Framework.Strategy;
+
     [TestFixture]
     public class FilterTests
     {
@@ -77,6 +80,8 @@ namespace OpenCover.Test.Framework
                                                               };
 #pragma warning restore 169   
         #endregion
+        private MethodDefinition _methodDefinition = InstructionFactory.CreateMethodDefinition("System", "Object", "Blarg", null);
+
 
         [Test]
         public void AddFilter_ThrowsException_WhenInvalid_AssemblyClassPair(
@@ -399,7 +404,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageConditionExclusion(null);
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -410,7 +415,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object");
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));           
+            Assert.False(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));           
         }
 
         [Test]
@@ -421,7 +426,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::");
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -432,7 +437,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.True(filter.IsExcludedConditionBranch(instruction));            
+            Assert.True(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -444,7 +449,7 @@ namespace OpenCover.Test.Framework
             filter.AddIntermediateLanguageConditionExclusion("Flinstone::Smash");
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.True(filter.IsExcludedConditionBranch(instruction));
+            Assert.True(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -466,7 +471,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -478,7 +483,17 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageConditionExclusion("System.Object::Blah");
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
+        }
+
+        [Test]
+        public void ExcludedBranchesInMethodsReturnsMultipleBranchIgnores()
+        {
+            var filter = new Filter();
+            var instruction = CreatePreviousCallInstruction("System", "Object", "Blah");
+            filter.AddMethodExclusion("Blarg");
+
+            Assert.True(filter.IsExcludedConditionBranch(new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -488,7 +503,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion(null);
 
-            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface")));
         }
 
         [Test]
@@ -498,7 +513,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion("System::0");
 
-            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface")));
         }
 
         [Test]
@@ -508,7 +523,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion("System::Object");
 
-            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface")));
         }
 
         [Test]
@@ -518,7 +533,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion("System::Object::");
 
-            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface")));
         }
 
         [Test]
@@ -528,7 +543,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion("System::Object::b,c");
 
-            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface")));            
+            Assert.IsEmpty(filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface")));            
         }
 
         [Test]
@@ -538,7 +553,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion("System.Interface::ToString::0");
 
-            var result = filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface"));
+            var result = filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface"));
 
             Assert.AreEqual(new List<int>() { 0 }, result);
         }
@@ -550,7 +565,7 @@ namespace OpenCover.Test.Framework
 
             filter.AddIntermediateLanguageBranchExclusion("System.Interface::ToString::2,4");
 
-            var result = filter.ExcludedIntermediateLanguageBranches(CreateMethodDefinition("System", "Object", "ToString", "Interface"));
+            var result = filter.ExcludedIntermediateLanguageBranches(InstructionFactory.CreateMethodDefinition("System", "Object", "ToString", "Interface"));
 
             Assert.AreEqual(new List<int>() { 2, 4 }, result);
         }
@@ -758,7 +773,7 @@ namespace OpenCover.Test.Framework
             filter.ExcludeLambdaAutoGeneratedBranches();
             var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
 
-            Assert.True(filter.IsExcludedConditionBranch(instruction));
+            Assert.True(filter.IsExcludedConditionBranch(﻿new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -767,7 +782,7 @@ namespace OpenCover.Test.Framework
             var filter = new Filter();
             var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(﻿new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -777,7 +792,7 @@ namespace OpenCover.Test.Framework
             filter.ExcludeLambdaAutoGeneratedBranches();
             var instruction = CreatePreviousLoadFieldInstruction("wat", null);
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(﻿new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -787,7 +802,7 @@ namespace OpenCover.Test.Framework
             filter.ExcludeLambdaAutoGeneratedBranches();
             var instruction = CreatePreviousLoadFieldInstruction("wat", typeof(CompilerGeneratedAttribute));
             instruction.Previous = null;
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
+            Assert.False(filter.IsExcludedConditionBranch(﻿new InstructionData(instruction, _methodDefinition)));
         }
 
         [Test]
@@ -799,19 +814,7 @@ namespace OpenCover.Test.Framework
             instruction.Previous.OpCode = OpCodes.Call;
             instruction.Previous.Operand = new MethodDefinition("blah", MethodAttributes.Final, CreateTypeReference("some", "foo"));
 
-            Assert.False(filter.IsExcludedConditionBranch(instruction));
-        }
-
-        private static MethodDefinition CreateMethodDefinition(string nameSpace, string className, string methodName, string implementedInterface)
-        {
-            var typeReference = CreateTypeReference(nameSpace, className);
-            var methodDefinition = new MethodDefinition(methodName, MethodAttributes.Final, typeReference);
-            methodDefinition.DeclaringType = new TypeDefinition(
-                typeReference.Namespace,
-                typeReference.Name,
-                TypeAttributes.Abstract);
-            methodDefinition.DeclaringType.Interfaces.Add(CreateTypeReference(nameSpace, implementedInterface));
-            return methodDefinition;
+            Assert.False(filter.IsExcludedConditionBranch(﻿new InstructionData(instruction, _methodDefinition)));
         }
 
         private static Instruction CreatePreviousCallInstruction(string NameSpace, string ClassName, string MethodName)

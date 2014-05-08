@@ -446,6 +446,37 @@ namespace OpenCover.Test.Framework
         }
 
         [Test]
+        public void HandlesSingleMethodExclusion()
+        {
+            // arrange
+            var parser = new CommandLineParser(new[] { "-excludemethods:methodman", RequiredArgs });
+
+            // act
+            parser.ExtractAndValidateArguments();
+
+            //assert
+            Assert.AreEqual(1, parser.MethodExclusionFilters.Count);
+            Assert.AreEqual("methodman", parser.MethodExclusionFilters[0]);
+        }
+
+        [Test]
+        public void HandlesMultpleMethodExclusions()
+        {
+            // arrange
+            var parser = new CommandLineParser(new[] { "-excludemethods:methodman;mrman;drman;*man", RequiredArgs });
+
+            // act
+            parser.ExtractAndValidateArguments();
+
+            //assert
+            Assert.AreEqual(4, parser.MethodExclusionFilters.Count);
+            Assert.AreEqual("methodman", parser.MethodExclusionFilters[0]);
+            Assert.AreEqual("mrman", parser.MethodExclusionFilters[1]);
+            Assert.AreEqual("drman", parser.MethodExclusionFilters[2]);
+            Assert.AreEqual("*man", parser.MethodExclusionFilters[3]);
+        }
+
+        [Test]
         public void HandlesExcludeByAttributeArgument_WithMultipleValues()
         {
             // arrange  

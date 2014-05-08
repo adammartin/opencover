@@ -8,18 +8,6 @@
 
     using OpenCover.Framework.Strategy;
 
-    public class MethodExclusion
-    {
-        public string MethodName { get; private set; }
-        public string MethodClass { get; private set; }
-
-        public MethodExclusion(string methodClass, string methodName)
-        {
-            MethodName = methodName;
-            MethodClass = methodClass;
-        }
-    }
-
     public class IntermediateLanguageGeneratedBranch : ISkippedBranch
     {
         private readonly IList<MethodExclusion> ExcludedIntermediateLanguageConditionBranch;
@@ -29,12 +17,15 @@
             ExcludedIntermediateLanguageConditionBranch = excludedIntermediateLanguageConditionBranch;
         }
 
-        public bool IsSkipped(Instruction instruction)
+        public bool IsSkipped(InstructionData instructionData)
         {
-            if (instruction == null || instruction.Previous == null || !(instruction.Previous.Operand is MethodReference))
+            if (instructionData == null || instructionData.Instruction == null 
+                || instructionData.Instruction.Previous == null 
+                || !(instructionData.Instruction.Previous.Operand is MethodReference))
             {
                 return false;
             }
+            var instruction = instructionData.Instruction;
             var previous = instruction.Previous;
             var operand = previous.Operand as MethodReference;
             return

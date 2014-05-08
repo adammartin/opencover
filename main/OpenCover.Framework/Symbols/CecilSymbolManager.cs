@@ -372,7 +372,7 @@ namespace OpenCover.Framework.Symbols
                 PathOffsetList = GetBranchPath(@else);
                 Debug.Assert(PathOffsetList.Count > 0);
 
-                var skipped = _filter.IsExcludedConditionBranch(instruction);
+                var skipped = _filter.IsExcludedConditionBranch(new InstructionData(instruction, methodDefinition));
 
                 // add Path 0
                 BranchPoint path0 = new BranchPoint()

@@ -163,7 +163,7 @@ namespace OpenCover.Test.Framework.Symbols
                 .Setup(x => x.InstrumentClass(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(true);
             _mockFilter
-                .Setup(x => x.IsExcludedConditionBranch(It.Is<Instruction>(y => y.OpCode.FlowControl.Equals(FlowControl.Cond_Branch))))
+                .Setup(x => x.IsExcludedConditionBranch(It.Is<InstructionData>(y => y.Instruction.OpCode.FlowControl == FlowControl.Cond_Branch && y.EnclosingMethod.Name == "HasSingleDecision")))
                 .Returns(true);
 
             var types = _reader.GetInstrumentableTypes();

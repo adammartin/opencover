@@ -82,6 +82,9 @@
     <Compile Include="CommandLineParserBase.cs" />
     <Compile Include="Communication\MarshalWapper.cs" />
     <Compile Include="Communication\CommunicationManager.cs" />
+    <Compile Include="Strategy\ExcludeMethodBranches.cs" />
+    <Compile Include="Strategy\InstructionData.cs" />
+    <Compile Include="Strategy\MethodExclusion.cs" />
     <Compile Include="Strategy\IntermediateLanguageGeneratedBranch.cs" />
     <Compile Include="Manager\IManagedCommunicationBlock.cs" />
     <Compile Include="Manager\IManagedMemoryBlock.cs" />

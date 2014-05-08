@@ -383,6 +383,7 @@ namespace OpenCover.Console
             filter.AddTestFileFilters(parser.TestFilters.ToArray());
             parser.IntermediateLanguageBranchExclusionFilters.ForEach(filter.AddIntermediateLanguageBranchExclusion);
             parser.IntermediateLanguageConditionExclusionFilters.ForEach(filter.AddIntermediateLanguageConditionExclusion);
+            parser.MethodExclusionFilters.ForEach(filter.AddMethodExclusion);
 
             return filter;
         }
